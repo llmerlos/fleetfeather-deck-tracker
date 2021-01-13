@@ -1,7 +1,6 @@
 const { app, BrowserWindow, ipcMain } = require('electron')
 const path = require("path");
 const isDev = require("electron-is-dev");
-//const { DeckEncoder } = require('runeterra')
 const low = require('lowdb')
 const FileSync = require('lowdb/adapters/FileSync');
 
@@ -24,11 +23,16 @@ function createWindow() {
         }});
     mainWindow.loadURL(isDev? "http://localhost:3000": `file://${path.join(__dirname, "../build/index.html")}`);
     mainWindow.on("closed", () => (mainWindow = null));
+
+    if (isDev) {
+        mainWindow.webContents.openDevTools()
+    } else {
+        mainWindow.removeMenu()
+    }
 }
 
 app.on("ready", () => {
     createWindow()
-    //let res = db.get('cards').find({ cost: 8 }).value()
 
     ipcMain.on('COUNTER_UPDATED', (event, data) => {
         console.log(data)
@@ -48,7 +52,7 @@ app.on("ready", () => {
     
     apiCallsWindow.loadURL(isDev? `file://${path.join(__dirname, "../src/apicalls.html")}`: `file://${path.join(__dirname, "../build/apicalls.html")}`);
     apiCallsWindow.webContents.openDevTools()
-    
+
     apiCallsWindow.once('ready-to-show', () => {
         apiCallsWindow.show()
     })
@@ -69,11 +73,6 @@ app.on("activate", () => {
         createWindow()
     }
 });
-
-app.on("data", (evt, data) => {
-    console.log(evt)
-    console.log(data)
-})
 
 ipcMain.on("infoFromApi", async (event, arg) => {
     console.log("Sending this "+arg.command)

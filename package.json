@@ -1,12 +1,19 @@
 {
-  "name": "fdtr",
+  "name": "fleetfeather-deck-tracker",
   "version": "0.1.0",
   "description": "LoR Deck Tracker",
+  "homepage": "https://github.com/llmerlos/fleetfeather-deck-tracker",
+  "license": "MIT",
+  "author": {
+    "name": "Lluís Merlos Pieri",
+    "email": "llmerlos@outlook.com"
+  },
+  "repository": "https://github.com/llmerlos/fleetfeather-deck-tracker",
   "build": {
-    "appId": "<com.fdtr"
+    "appId": "com.grezz.fdtr",
+    "productName": "Fleetfeather Deck Tracker"
   },
   "main": "public/electron.js",
-  "homepage": "./",
   "private": true,
   "dependencies": {
     "@testing-library/jest-dom": "^5.11.4",
