@@ -1,5 +1,6 @@
 const { ipcRenderer } = window.require("electron");
 const axios = require("axios")
+const fs = require("fs")
 axios.defaults.port=21337
 
 let game;
@@ -21,10 +22,26 @@ async function callApi(apiName){
     }
 }
 
+async function callDD(apiName){
+    try {
+        var x = await axios.get('http://dd.b.pvp.net/latest/'+apiName)
+        return x.data
+    } catch {
+        return false
+    }
+}
+
 async function polling() {
     var inGame = false
     var gotDeckCode = false
-    while(true){
+    var dbready = false
+    var version = ""
+    while(!dbready){
+        [dbready, version] = await getDb();
+    }
+    sendToUI("db", version)
+
+    while(dbready){
         while(!inGame){
             console.log("Polling for game start")
             let data = await callApi('positional-rectangles')
@@ -67,6 +84,52 @@ async function polling() {
         }
         gotDeckCode = false
     }
+}
+
+async function getDb(){
+    var data = await callDD('set1/en_us/data/set1-en_us.json')
+    if(data !== false){
+        let temp = data[0].assets[0].fullAbsolutePath
+        let res = temp.replace("http://dd.b.pvp.net/", "")
+        let version = res.split('/')[0]
+
+        let exists = true
+        try{
+            let raw = fs.readFileSync(version+'.json')
+            console.log(JSON.parse(raw))
+        } catch (err) {
+            exists = false
+        }
+        if(exists){
+            return [true, version]
+        } else {
+            let core = await callDD('core/en_us/data/globals-en_us.json')
+            if (core !== false ) {
+                let nsets = core.sets.length
+    
+                let sets = []
+                let failed = false
+                for(let i = 1; i <= nsets; i++){
+                    let set = await callDD('set'+i+'/en_us/data/set'+i+'-en_us.json')
+                    if (set !== false) {
+                        sets = sets.concat(set)
+                    } else {
+                        failed = true
+                    }
+                }
+    
+                if (!failed) {
+                    let db = core
+                    db.cards = sets
+                    console.log(db)
+                    fs.writeFileSync(version+'.json',JSON.stringify(db))
+                    return [true, version]
+                }
+            }
+        }
+    } 
+    return false
+
 }
 
 

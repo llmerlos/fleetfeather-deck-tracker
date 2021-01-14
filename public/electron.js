@@ -1,11 +1,11 @@
 const { app, BrowserWindow, ipcMain } = require('electron')
 const path = require("path");
 const isDev = require("electron-is-dev");
+const fs = require('fs');
 const low = require('lowdb')
 const FileSync = require('lowdb/adapters/FileSync');
 
-const adapter = new FileSync('assets/2_0_0.json')
-const db = low(adapter)
+var db = null
 
 let mainWindow = null;
 let apiCallsWindow = null;
@@ -33,14 +33,6 @@ function createWindow() {
 
 app.on("ready", () => {
     createWindow()
-
-    ipcMain.on('COUNTER_UPDATED', (event, data) => {
-        console.log(data)
-    })
-
-    mainWindow.once('ready-to-show', () => {
-        mainWindow.show()
-    })
 
     apiCallsWindow = new BrowserWindow({
         show: false,
@@ -78,7 +70,12 @@ ipcMain.on("infoFromApi", async (event, arg) => {
     console.log("Sending this "+arg.command)
     console.log(arg.payload)
     
-    if (arg.command === "deck") {
+    if (arg.command === "db") {
+        let adapter = new FileSync(arg.payload+'.json')
+        db = low(adapter)
+        mainWindow.show()
+
+    } else if (arg.command === "deck") {
         var deck = []
         for(var key in arg.payload){
             let res = db.get('cards').find({ cardCode: key }).value()
