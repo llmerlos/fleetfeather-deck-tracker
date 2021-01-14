@@ -1,7 +1,6 @@
 const { app, BrowserWindow, ipcMain } = require('electron')
 const path = require("path");
 const isDev = require("electron-is-dev");
-const fs = require('fs');
 const low = require('lowdb')
 const FileSync = require('lowdb/adapters/FileSync');
 
@@ -18,21 +17,30 @@ function createWindow() {
         minHeight: 600,
         show: false,
         webPreferences: {
+            preload: path.join(__dirname, 'preload.js'),
             contextIsolation: false,
             nodeIntegration: true
         }});
-    mainWindow.loadURL(isDev? "http://localhost:3000": `file://${path.join(__dirname, "../build/index.html")}`);
-    mainWindow.on("closed", () => (mainWindow = null));
-
-    if (isDev) {
+    mainWindow.loadURL(isDev? "http://localhost:3000": `file://${path.join(__dirname, "../index.html")}`);
+    if(isDev){
         mainWindow.webContents.openDevTools()
     } else {
         mainWindow.removeMenu()
     }
+    
+
 }
 
 app.on("ready", () => {
     createWindow()
+
+    mainWindow.on('ready-to-show', () => {
+        mainWindow.show()
+    })
+
+    mainWindow.on("closed", () => (
+        app.quit()
+    ));
 
     apiCallsWindow = new BrowserWindow({
         show: false,
@@ -42,11 +50,13 @@ app.on("ready", () => {
         }
     })
     
-    apiCallsWindow.loadURL(isDev? `file://${path.join(__dirname, "../src/apicalls.html")}`: `file://${path.join(__dirname, "../build/apicalls.html")}`);
+    apiCallsWindow.loadURL(isDev? `file://${path.join(__dirname, "apicalls.html")}`: `file://${path.join(__dirname, "../electron/apicalls.html")}`);
     apiCallsWindow.webContents.openDevTools()
 
     apiCallsWindow.once('ready-to-show', () => {
-        apiCallsWindow.show()
+        if(isDev){
+            apiCallsWindow.show()
+        }
     })
     
     apiCallsWindow.on('closed', () => {

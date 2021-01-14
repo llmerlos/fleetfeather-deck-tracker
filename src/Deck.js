@@ -1,7 +1,7 @@
 import React from 'react';
 import './Deck.css';
 
-const { ipcRenderer } = window.require("electron");
+const { ipcRenderer } = window; 
 
 function Card(props) {
     var color = "#6B6964"
